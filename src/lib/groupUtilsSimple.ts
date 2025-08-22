@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { Medical } from "@/types";
 
 // Helper function to get group member IDs for the current user
 export async function getCurrentUserGroupMemberIds(): Promise<string[]> {
@@ -69,7 +70,7 @@ export async function getDoctorsWithGroupFilter() {
       // Admin sees all doctors
       const { data, error } = await supabase
         .from("doctors")
-        .select("*");
+        .select("id, name, specialization, hospital, address, area, city, is_verified, added_by, created_at, email, phone");
       
       if (error) throw error;
       return data || [];
@@ -79,7 +80,7 @@ export async function getDoctorsWithGroupFilter() {
       
       const { data, error } = await supabase
         .from("doctors")
-        .select("*")
+        .select("id, name, specialization, hospital, address, area, city, is_verified, added_by, created_at, email, phone")
         .in("added_by", groupMemberIds);
       
       if (error) throw error;
@@ -92,7 +93,7 @@ export async function getDoctorsWithGroupFilter() {
 }
 
 // Helper function to get medicals with group-based filtering
-export async function getMedicalsWithGroupFilter() {
+export async function getMedicalsWithGroupFilter(): Promise<Medical[]> {
   try {
     const isAdmin = await isCurrentUserAdmin();
     
@@ -100,7 +101,7 @@ export async function getMedicalsWithGroupFilter() {
       // Admin sees all medicals
       const { data, error } = await supabase
         .from("medicals")
-        .select("*");
+        .select("id, name, address, area, created_at, user_id");
       
       if (error) throw error;
       return data || [];
@@ -110,7 +111,7 @@ export async function getMedicalsWithGroupFilter() {
       
       const { data, error } = await supabase
         .from("medicals")
-        .select("*")
+        .select("id, name, address, area, created_at, user_id")
         .in("user_id", groupMemberIds);
       
       if (error) throw error;
