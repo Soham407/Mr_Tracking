@@ -35,3 +35,11 @@ export interface UserWithAuth extends User {
     password?: string;
   }
 }
+
+export type Group = Tables<'groups'>;
+export type GroupMember = Tables<'group_members'>;
+
+export interface GroupWithMembers extends Group {
+  members: User[];
+  memberCount: number;
+}

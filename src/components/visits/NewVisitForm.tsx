@@ -43,6 +43,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Medicine, Doctor, Order } from "@/types";
+import { getDoctorsWithGroupFilter } from "@/lib/groupUtilsSimple";
 import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
 import { PostgrestError } from "@supabase/supabase-js"; // Import PostgrestError
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -171,21 +172,15 @@ export function NewVisitForm() {
       
       setIsFetchingDoctors(true);
       try {
-        const { data, error } = await supabase
-          .from('doctors')
-          .select('*')
-          .eq('added_by', user.id);
+        // Use group-based filtering
+        const data = await getDoctorsWithGroupFilter();
         
-        if (error) {
-          setDoctorError(error.message);
-          toast.error("Failed to load doctors list.");
-        } else {
-          console.log('Fetched doctors:', data);
-          setDoctors(data || []);
-        }
+        console.log('Fetched doctors:', data);
+        setDoctors(data || []);
       } catch (error) {
         console.error('Error fetching doctors:', error);
         setDoctorError('Failed to load doctors');
+        toast.error("Failed to load doctors list.");
       } finally {
         setIsFetchingDoctors(false);
       }

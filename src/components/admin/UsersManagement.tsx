@@ -43,6 +43,7 @@ import {
 import { Label } from "@/components/ui/label";
 // Updated imports for icons
 import { CheckCircle, PlusIcon, Search, XCircle, Trash2, Power, PowerOff } from "lucide-react";
+import { GroupManagement } from "./GroupManagement";
 
 // Helper function to format date as dd-Mon-yy
 const formatDate = (dateString: string | null | undefined): string => {
@@ -337,6 +338,9 @@ export function UsersManagement() {
           <PlusIcon className="mr-2 h-4 w-4" /> Add User
         </Button>
       </div>
+      
+      {/* Group Management Section */}
+      <GroupManagement />
       
       <div className="flex items-center space-x-2">
         <div className="relative flex-1">

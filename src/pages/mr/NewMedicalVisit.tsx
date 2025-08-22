@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PostgrestError } from "@supabase/supabase-js";
+import { getMedicalsWithGroupFilter } from "@/lib/groupUtilsSimple";
 import { Medicine, Medical } from "@/types";
 import { Tables } from "@/integrations/supabase/types";
 import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
@@ -136,13 +137,8 @@ export function NewMedicalVisit() {
     const fetchMedicals = async () => {
       setIsFetchingMedicals(true);
       try {
-        const { data, error } = await supabase
-          .from("medicals")
-          .select("*")
-          .eq("user_id", user?.id) // Filter by current user's ID
-          .order("name", { ascending: true });
-
-        if (error) throw error;
+        // Use group-based filtering
+        const data = await getMedicalsWithGroupFilter();
 
         // Map the data to the Medical type
         const medicalData: Medical[] = data.map((medical) => ({

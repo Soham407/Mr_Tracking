@@ -37,6 +37,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getMedicalsWithGroupFilter } from "@/lib/groupUtilsSimple";
 
 // Update the Medical type to match the database schema
 type Medical = {
@@ -153,17 +154,9 @@ export function MedicalsManagement() {
         }));
 
       } else {
-        const { data, error } = await supabase
-          .from("medicals")
-          .select("*")
-          .eq('user_id', user.id)
-          .returns<Medical[]>();
-
-        if (error) {
-          console.error("Supabase error fetching medicals for MR:", error);
-          throw error;
-        }
-        medicalsData = data;
+        // Use group-based filtering for MRs
+        const data = await getMedicalsWithGroupFilter();
+        medicalsData = data || [];
       }
 
       setMedicals(medicalsData || []);

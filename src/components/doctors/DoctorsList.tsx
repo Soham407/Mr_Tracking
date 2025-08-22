@@ -33,6 +33,7 @@ import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { areaData, cities } from "@/lib/areaData";
+import { getDoctorsWithGroupFilter } from "@/lib/groupUtilsSimple";
 
 export function DoctorsList() {
   const { user } = useUser();
@@ -70,17 +71,8 @@ export function DoctorsList() {
   const fetchDoctors = async () => {
     try {
       setIsLoading(true);
-      // Get the current user's ID
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("You must be logged in to view doctors");
-      }
-      // Fetch only doctors added by the current user
-      const { data, error } = await supabase
-        .from("doctors")
-        .select("*")
-        .eq("added_by", user.id);
-      if (error) throw error;
+      // Use group-based filtering
+      const data = await getDoctorsWithGroupFilter();
       setDoctors(data || []);
     } catch (error) {
       console.error("Error fetching doctors:", error);

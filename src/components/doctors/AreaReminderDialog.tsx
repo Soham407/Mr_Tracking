@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Doctor } from "@/types";
+import { getDoctorsWithGroupFilter } from "@/lib/groupUtilsSimple";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,14 +93,11 @@ export function AreaReminderDialog({ onEditDoctor }: AreaReminderDialogProps) {
           }
         }
 
-        // Fetch doctors without area
-        const { data: doctors, error } = await supabase
-          .from("doctors")
-          .select("*")
-          .eq("added_by", user.id)
-          .or('area.is.null,area.eq.""');
-
-        if (error) throw error;
+        // Fetch doctors without area using group-based filtering
+        const allDoctors = await getDoctorsWithGroupFilter();
+        const doctors = allDoctors.filter(doctor => 
+          !doctor.area || doctor.area.trim() === ''
+        );
 
         if (doctors && doctors.length > 0) {
           setDoctorsWithoutArea(doctors);

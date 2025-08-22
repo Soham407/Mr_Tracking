@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Doctor } from "@/types";
+import { getDoctorsWithGroupFilter } from "@/lib/groupUtilsSimple";
 import AnimatedList from "@/components/ui/animated-list";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,19 +21,8 @@ const Area = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // Get the current user's ID
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          throw new Error("You must be logged in to view areas");
-        }
-
-        // Fetch doctors added by the current user
-        const { data: doctorsData, error: doctorsError } = await supabase
-          .from("doctors")
-          .select("*")
-          .eq("added_by", user.id);
-
-        if (doctorsError) throw doctorsError;
+        // Use group-based filtering
+        const doctorsData = await getDoctorsWithGroupFilter();
 
         // Extract unique areas from doctors data
         const uniqueAreas = Array.from(new Set(doctorsData?.map(doctor => doctor.area).filter(area => area && area.trim() !== '') || []));

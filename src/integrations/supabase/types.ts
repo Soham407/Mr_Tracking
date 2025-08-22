@@ -300,6 +300,68 @@ export type Database = {
         }
         Relationships: []
       }
+      groups: {
+        Row: {
+          id: string
+          name: string
+          created_at: string
+          created_by: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_at?: string
+          created_by: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_at?: string
+          created_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      group_members: {
+        Row: {
+          group_id: string
+          user_id: string
+          joined_at: string
+        }
+        Insert: {
+          group_id: string
+          user_id: string
+          joined_at?: string
+        }
+        Update: {
+          group_id?: string
+          user_id?: string
+          joined_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
