@@ -32,49 +32,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-
-// Add predefined areas list
-const predefinedAreas = [
-  "Hadapsar",
-  "Dhanori",
-  "Nagar Road",
-  "Satara Road",
-  "Uralikanchan",
-  "Kondwa",
-  "Rasta Peth",
-  "Kothrud",
-  "Karve Nagar",
-  "Warje",
-  "Sinhgad Road",
-  "Deccan",
-  "Uttam Nagar",
-  "Aundh Baner",
-  "Kolhapur",
-  "Sangali",
-  "Miraj",
-  "Bhogawati",
-  "Shahupuri",
-  "Rajarampuri",
-  "Balinga",
-  "Apatenagar",
-  "Kawala naka",
-  "Rankala dudhali",
-  "Shivaji peth",
-  "Mangalwar Peth",
-  "Kalevadi",
-  "Ravet",
-  "Dange Chowk",
-  "Bhumkar Chowk",
-  "Nigdi",
-  "Talegaon Dabhade",
-  "Bhosari",
-  "Margao",
-  "Canacona",
-  "Vasco",
-  "Panjim",
-  "Ponda",
-  "Mapusa"
-];
+import { areaData, cities } from "@/lib/areaData";
 
 export function DoctorsList() {
   const { user } = useUser();
@@ -331,6 +289,13 @@ export function DoctorsList() {
                 </TableHead>
                 <TableHead
                   className="hidden md:table-cell cursor-pointer"
+                  onClick={() => handleSort("city")}
+                >
+                  City
+                   <ArrowUpDown className={`ml-2 h-4 w-4 inline ${sortColumn === 'city' ? '' : 'text-muted-foreground opacity-50'} ${sortColumn === 'city' && sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                </TableHead>
+                <TableHead
+                  className="hidden md:table-cell cursor-pointer"
                   onClick={() => handleSort("area")}
                 >
                   Area
@@ -374,6 +339,7 @@ export function DoctorsList() {
                     <TableCell>{doctor.specialization}</TableCell>
                     <TableCell className="hidden md:table-cell">{doctor.hospital}</TableCell>
                     <TableCell className="hidden md:table-cell">{doctor.address || "-"}</TableCell>
+                    <TableCell className="hidden md:table-cell">{doctor.city || "-"}</TableCell>
                     <TableCell className="hidden md:table-cell">{doctor.area || "-"}</TableCell>
                     <TableCell>
                       <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
@@ -500,6 +466,7 @@ export function DoctorsList() {
                       variant="outline"
                       role="combobox"
                       className="w-full justify-between"
+                      disabled={!newDoctor.city}
                     >
                       {newDoctor.area || "Select area..."}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -511,7 +478,7 @@ export function DoctorsList() {
                       <CommandList className="max-h-[200px] overflow-y-auto">
                         <CommandEmpty>No area found.</CommandEmpty>
                         <CommandGroup>
-                          {predefinedAreas.map((area) => (
+                          {newDoctor.city && areaData[newDoctor.city]?.map((area) => (
                             <CommandItem
                               value={area}
                               key={area}
@@ -539,12 +506,45 @@ export function DoctorsList() {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  value={newDoctor.city}
-                  onChange={(e) => setNewDoctor({ ...newDoctor, city: e.target.value })}
-                  placeholder="Health City"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between"
+                    >
+                      {newDoctor.city || "Select city..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search city..." />
+                      <CommandList className="max-h-[200px] overflow-y-auto">
+                        <CommandEmpty>No city found.</CommandEmpty>
+                        <CommandGroup>
+                          {cities.map((city) => (
+                            <CommandItem
+                              value={city}
+                              key={city}
+                              onSelect={() => {
+                                setNewDoctor({ ...newDoctor, city: city, area: "" });
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  newDoctor.city === city ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {city}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="phone">Phone</Label>
@@ -692,6 +692,7 @@ export function DoctorsList() {
                         variant="outline"
                         role="combobox"
                         className="w-full justify-between"
+                        disabled={!editingDoctor.city}
                       >
                         {editingDoctor.area || "Select area..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -703,7 +704,7 @@ export function DoctorsList() {
                         <CommandList className="max-h-[200px] overflow-y-auto">
                           <CommandEmpty>No area found.</CommandEmpty>
                           <CommandGroup>
-                            {predefinedAreas.map((area) => (
+                            {editingDoctor.city && areaData[editingDoctor.city]?.map((area) => (
                               <CommandItem
                                 value={area}
                                 key={area}
@@ -728,13 +729,57 @@ export function DoctorsList() {
                 </div>
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="edit-phone">Phone</Label>
-                <Input
-                  id="edit-phone"
-                  value={editingDoctor.phone || ""}
-                  onChange={(e) => setEditingDoctor({ ...editingDoctor, phone: e.target.value })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-city">City</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between"
+                      >
+                        {editingDoctor.city || "Select city..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search city..." />
+                        <CommandList className="max-h-[200px] overflow-y-auto">
+                          <CommandEmpty>No city found.</CommandEmpty>
+                          <CommandGroup>
+                            {cities.map((city) => (
+                              <CommandItem
+                                value={city}
+                                key={city}
+                                onSelect={() => {
+                                  setEditingDoctor({ ...editingDoctor, city: city, area: "" });
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    editingDoctor.city === city ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {city}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-phone">Phone</Label>
+                  <Input
+                    id="edit-phone"
+                    value={editingDoctor.phone || ""}
+                    onChange={(e) => setEditingDoctor({ ...editingDoctor, phone: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
           )}

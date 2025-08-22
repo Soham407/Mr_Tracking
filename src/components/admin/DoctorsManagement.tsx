@@ -337,6 +337,12 @@ export function DoctorsManagement() {
                      <ArrowUpDown className="ml-1 h-4 w-4" />
                   </div>
                 </TableHead>
+                <TableHead className="hidden md:table-cell cursor-pointer" onClick={() => handleSort('city')}>
+                  <div className="flex items-center">
+                    City
+                    <ArrowUpDown className="ml-1 h-4 w-4" />
+                  </div>
+                </TableHead>
                 <TableHead className="hidden md:table-cell cursor-pointer" onClick={() => handleSort('area')}>
                    <div className="flex items-center">
                     Area
@@ -378,6 +384,7 @@ export function DoctorsManagement() {
                     <TableCell>{doctor.specialization}</TableCell>
                     <TableCell className="hidden md:table-cell">{doctor.hospital}</TableCell>
                     <TableCell className="hidden md:table-cell">{doctor.address}</TableCell>
+                    <TableCell className="hidden md:table-cell">{doctor.city || "-"}</TableCell>
                     <TableCell className="hidden md:table-cell">{doctor.area}</TableCell>
                     <TableCell>
                       <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${

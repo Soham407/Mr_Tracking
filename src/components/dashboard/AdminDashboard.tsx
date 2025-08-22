@@ -138,6 +138,21 @@ export function AdminDashboard() {
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
   const [loading, setLoading] = useState(true); // Global loading for initial dashboard load
   const [error, setError] = useState<string | null>(null); // Global error
+
+  // Helper function to get meaningful error messages
+  const getErrorMessage = (error: unknown): string => {
+    if (!error) return "Unknown error";
+    if (typeof error === "string") return error;
+    if (error instanceof Error) return error.message;
+    if (typeof error === "object" && error !== null && "message" in error) {
+      return String((error as { message: string }).message);
+    }
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return String(error);
+    }
+  };
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedApproval, setSelectedApproval] = useState<PendingApproval | null>(null);
   const [filter, setFilter] = useState<'weekly' | 'daily' | 'all'>('all');
@@ -175,12 +190,19 @@ export function AdminDashboard() {
     const visitIds = approvedVisitsData?.map(v => v.id) || [];
     let allVisitOrdersData: ({ visit_id: string; quantity: number; })[] = [];
     if (visitIds.length > 0) {
-      const { data: ordersDataForVisits, error: ordersErrorForVisits } = await supabase
-        .from('visit_orders')
-        .select('visit_id, quantity')
-        .in('visit_id', visitIds);
-      if (ordersErrorForVisits) throw ordersErrorForVisits;
-      allVisitOrdersData = ordersDataForVisits || [];
+      // Batch the visit IDs to avoid Supabase limits (max ~100 items per IN clause)
+      const batchSize = 100;
+      for (let i = 0; i < visitIds.length; i += batchSize) {
+        const batch = visitIds.slice(i, i + batchSize);
+        const { data: ordersDataForVisits, error: ordersErrorForVisits } = await supabase
+          .from('visit_orders')
+          .select('visit_id, quantity')
+          .in('visit_id', batch);
+        if (ordersErrorForVisits) throw ordersErrorForVisits;
+        if (ordersDataForVisits) {
+          allVisitOrdersData = [...allVisitOrdersData, ...ordersDataForVisits];
+        }
+      }
     }
 
     const visitOrdersMap = new Map<string, VisitOrder[]>();
@@ -296,8 +318,7 @@ export function AdminDashboard() {
       });
       setVisitTrend(visitTrendArray);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      setError(`Failed to fetch dashboard data: ${errorMessage}`);
+      setError(`Failed to fetch dashboard data: ${getErrorMessage(error)}`);
     } finally {
       setCoreLoading(false);
     }
@@ -341,15 +362,26 @@ export function AdminDashboard() {
       
       let mrMap = new Map<string, string>();
       if (allMrIds.size > 0) {
-        const { data: mrData, error: mrError } = await supabase
-          .from('profiles')
-          .select('id, name')
-          .in('id', Array.from(allMrIds));
-        if (mrError) {
-          console.error('MR data error:', mrError);
-          throw new Error(`Failed to fetch MR data: ${mrError.message}`);
+        // Batch MR IDs to avoid Supabase limits
+        const mrIdsArray = Array.from(allMrIds);
+        const batchSize = 100;
+        let allMrData: MRProfile[] = [];
+        
+        for (let i = 0; i < mrIdsArray.length; i += batchSize) {
+          const batch = mrIdsArray.slice(i, i + batchSize);
+          const { data: mrData, error: mrError } = await supabase
+            .from('profiles')
+            .select('id, name')
+            .in('id', batch);
+          if (mrError) {
+            console.error('MR data error:', mrError);
+            throw new Error(`Failed to fetch MR data: ${mrError.message}`);
+          }
+          if (mrData) {
+            allMrData = [...allMrData, ...(mrData as unknown as MRProfile[])];
+          }
         }
-        mrMap = new Map((mrData as unknown as MRProfile[])?.map(mr => [mr.id, mr.name]) || []);
+        mrMap = new Map(allMrData?.map(mr => [mr.id, mr.name]) || []);
       }
       
       // Format pending approvals (NO detailedData)
@@ -408,7 +440,7 @@ export function AdminDashboard() {
       setDailyTopMRsDataCache(dailyTopMRs);
       setTopMRs(allTopMRs);
     } catch (error) {
-      setError(`Failed to fetch top MRs: ${error instanceof Error ? error.message : String(error)}`);
+      setError(`Failed to fetch top MRs: ${getErrorMessage(error)}`);
     } finally {
       setTopMRsLoading(false);
     }
@@ -478,8 +510,7 @@ export function AdminDashboard() {
       }
       fetchCoreDashboardData(); // Refresh data
     } catch (error: unknown) { // Changed any to unknown
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      setError(errorMessage);
+      setError(getErrorMessage(error));
       console.error(`Error approving ${type}:`, error);
       setLoading(false); // Stop loading on error
     }
@@ -523,8 +554,7 @@ export function AdminDashboard() {
       }
       fetchCoreDashboardData(); // Refresh data
     } catch (error: unknown) { // Changed any to unknown
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      setError(errorMessage);
+      setError(getErrorMessage(error));
       console.error(`Error rejecting ${type}:`, error);
       setLoading(false); // Stop loading on error
     }
@@ -586,7 +616,7 @@ export function AdminDashboard() {
       }
       setSelectedApproval({ ...item, detailedData });
     } catch (error) {
-      setError(`Failed to fetch details: ${error instanceof Error ? error.message : String(error)}`);
+      setError(`Failed to fetch details: ${getErrorMessage(error)}`);
     }
   };
 
